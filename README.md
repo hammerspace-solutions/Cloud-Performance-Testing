@@ -7,47 +7,44 @@ This README provides step-by-step instructions for setting up and running perfor
 - Ensure `../inventory.ini` exists (generated dynamically by Terraform via SSM pushes in the "ansible" module).
 - Required tools: Bash, Ansible (for inventory parsing), and access to SSH-configured targets.
 
-## Initial Setup
+## Setup
 
-0. **Directory and Inventory Check**:
+1. **Directory and Inventory Check**:
    - Ensure you're in a `/root/benchmark-*` directory.
    - Verify `../inventory.ini` is present (used by setup scripts to extract IPs for clients, storage servers, etc., post-SSM/SSH configuration).
 
-1. **Run Setup Script**:
-   - Execute `./setup.sh <test_name> <type>` (where `<type>` is "storage" or "ecgroup").
-   - This creates a `config` file, installs dependencies (e.g., OpenMPI, PDSH), mounts NFS shares via the Anvil, and prepares benchmarks on clients.
+2. **Load Ansible**:
+   - Make sure that the client running the benchmarks has ansible installed
+   - `apt install ansible`
 
-2. **Review and Update Config**:
-   - Open the generated `config` file.
-   - Update the `name` field as desired (e.g., for labeling your tier-specific test runs).
+3. **Create AWS Credentials for AWS CLI**:
 
-## Measure Bandwidth with IOR
+   If you are running the tests in AWS, one of the shell scripts gets the configuration data from AWS for the clients, storage servers, and Anvil. The script needs a aws configuration file in order to use the aws cli.
+   
+   - Create a .aws directory in the /root directory
+   - `cd .aws`
+   - Please the following in a file called `config`.
 
-1. **Edit Script**:
-   - Open `ior-Bandwidth-scale-v4.sh` and adjust parameters:
-     ```bash
-     STONE=300  # Stonewall timer in seconds (stops test after 5 minutes if running long)
-     LOGD=logs-Cloud-Scale-Bandwidth  # Local folder for high-level logs
-     C=4  # Number of clients to test with (defaults to 1 or total from config; update hosts dir for more)
-     for s in 20482 40964000; do  # Total data to write in MBs (20GB for page cache fit; ~400TB for stonewalled runs)
-     for i in 2 4 8 16; do  # Threads per client (increase until bandwidth peaks; base on max threads per volume)
+  ```
+  [default]
+  region = us-east-1
+  ```
 
-2. **Run the Script**:
-   - Edit `ior-IOPs-scale-v4.txt` as needed (similar parameters to bandwidth script).
-   - Execute `./ior-IOPs-scale-v4.txt`.
-   - Focuses on IOPS performance across your configured ECGroups or Storage Tiers.
+   - Please the following in a file called `credentials`. You will have to your own access key and secret access key in IAM.
 
-## Run FIO
+  ```
+  [default]
+  aws_access_key_id = AKIA5MBZHLROK512345
+  aws_secret_access_key = cQC2Uk+6tPgSA9d77QVFOeGZ95jTKAX312345
+  ```
 
-1. **Edit Script**:
-   - Open `cloud_data_path_tests.sh` and adjust:
-   ```
-   BW_FILE_COUNT='8'  # Files per client (set to match client CPU cores for optimal load)
-   ```
+## Running
 
-2. **Run the Script**:
-   - Execute `./capture-logs.sh`.
-   - This generates a tarball with all JSON results and logs. Save it for analysis (e.g., compare across tiers post-SSM/Ansible deployments).
+1. **Run the Script**:
+   - `./run-tests.sh <log-name> <storage>`
+
+`log-name` is any descriptive name for your tests.
+`storage` can be either `storage` or `ecgroup`
 
 ## Tips and Integration
   - **Automation via Ansible**: Push these scripts to the Ansible controller using SSM (e.g., via `ansible_ssm_jobs.tf`), then execute remotely on clients/storage servers over SSH for consisten benchmarking.
