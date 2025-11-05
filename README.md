@@ -23,14 +23,14 @@ This README provides step-by-step instructions for setting up and running perfor
    
    - Create a .aws directory in the /root directory
    - `cd .aws`
-   - Please the following in a file called `config`.
+   - Place the following in a file called `config`. Change the region if you are running somewhere other than us-east-1.
 
   ```
   [default]
   region = us-east-1
   ```
 
-   - Please the following in a file called `credentials`. You will have to your own access key and secret access key in IAM.
+   - Please the following in a file called `credentials`. You will have to use your own access key and secret access key from IAM.
 
   ```
   [default]
